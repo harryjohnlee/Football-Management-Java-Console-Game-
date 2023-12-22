@@ -1,21 +1,125 @@
 package footballgame;
 import java.util.Random;
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 
-public class fmhb {
+public class fmhb{
+	
 public static final String ANSI_RESET = "\u001B[0m";
 public static final String ANSI_RED = "\u001B[31m";
 public static final String ANSI_GREEN = "\u001B[32m";
 public static final String ANSI_YELLOW = "\u001B[33m";
 
+public static void main(String[] args) {
+   
+    String[][] players = new String[16][6];
+    String formation = "4-4-2";  
+    String teamName = "DefaultTeam";      
+    String managerName = "DefaultManager"; 
+    String savedFileName = "Defaultsave";
 
-	public static void main(String[] args) {
+    start(players, formation, teamName, managerName,savedFileName);
+}
+
+	public static void start(String[][] players, String formation, String teamName, String managerName, String savedFileName) {
+		startingScreen(players, formation, teamName, managerName, savedFileName);
 	
-	startup();
 	
 	
 	
-	}	
+	}
+	
+	public static void save(String[][] players, String formation, String managerName, String teamName, String savedFileName) {
+		Scanner keyboardInput = new Scanner(System.in);
+		String savedInput = keyboardInput.nextLine();
+		File saveFile = new File(savedFileName+".txt");
+		
+		try (BufferedWriter bw = new BufferedWriter(new FileWriter(saveFile))) {
+            
+			bw.write(formation+ "\n");
+			bw.write(managerName+ "\n");
+			bw.write(teamName+ "\n");
+			
+			for (int i=0; i<players.length; i++) {
+				bw.write((i+1)+ "\n");
+				
+				for (int j = 0; j < 6; j++) {
+                    bw.write(players[i][j] + "\n");	
+				}
+			}
+			System.out.println("Saved succesfully");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+	}
+	
+	public static void load(String[][] players, String formation, String managerName, String teamName, String savedFileName) {
+	    Scanner keyboardInput = new Scanner(System.in);
+	    System.out.println("Enter the file name you would like to load example.txt");
+	    String input = keyboardInput.nextLine();
+		File loadFile = new File(input);
+	    
+
+	    try (BufferedReader br = new BufferedReader(new FileReader(loadFile))) {
+	        String line;
+
+	        formation = br.readLine();
+	        managerName = br.readLine();
+	        teamName = br.readLine();
+
+	        // Read and process player data
+	        for (int i = 0; i < players.length; i++) {
+	            line = br.readLine();
+
+	            if (line != null) {
+	                // Assuming the first line of player data is the player index
+	                int playerIndex = Integer.parseInt(line.trim()) - 1;
+
+	                if (playerIndex >= 0 && playerIndex < players.length) {
+	                    for (int j = 0; j < 6; j++) {
+	                        line = br.readLine();
+	                        players[playerIndex][j] = line.trim();
+	                    }
+	                }
+	            }
+	        }
+
+	        System.out.println("Load successful");
+	        mainMenu(players, formation,teamName,managerName,savedFileName);
+	    } 
+		catch (IOException | NumberFormatException e) {
+	        e.printStackTrace();
+	       }
+	}
+	
+	public static void startingScreen(String[][] players, String formation, String teamName, String managerName, String savedFileName) {
+		
+		Scanner keyboardInput = new Scanner(System.in);
+        String input;
+
+        while (true) {
+            System.out.println("Type NEW or LOAD");
+            input = keyboardInput.nextLine();
+
+            if (input.equalsIgnoreCase("NEW")) {
+                startup();
+                break;
+            } else if (input.equalsIgnoreCase("LOAD")) {
+                load(players,formation, teamName,managerName, savedFileName);
+                break;
+            } else {
+                System.out.println("Invalid input. Please enter NEW or LOAD.");
+            }
+        }
+			
+				
+	}
+	
 	public static void startup() {
 		
 		Scanner keyboardInput = new Scanner(System.in);
@@ -26,6 +130,8 @@ public static final String ANSI_YELLOW = "\u001B[33m";
 		System.out.println("which formation would you like to play?");
 		System.out.println("4-4-2, 4-3-3, 4-2-3-1");
 		String formation = keyboardInput.nextLine();
+		System.out.println("choose a name for the save file, please make it all one word with no special characters.");
+		String savedFileName = keyboardInput.nextLine();
 			
 			while(true) {	
 				if (formation.equals("4-4-2")==true){
@@ -49,13 +155,16 @@ public static final String ANSI_YELLOW = "\u001B[33m";
 				}
 			}
 		String[][] players = teamGenerator();
+		save(players,formation, managerName, teamName,savedFileName);
 		System.out.println("BREAKING NEWS....");
 		System.out.println("_______________________________________________________________");
 		System.out.println(managerName + " has been assigned as the new "+ teamName +" manager.");
 		System.out.println("Favouriting the strong " + formation + ", " + managerName + " will hope to win the hearts of the fans and provide good results.");	
 		System.out.println("_______________________________________________________________");
-		mainMenu(players,formation);
+		
+		mainMenu(players,formation, teamName, managerName, savedFileName);
 		}
+	
 	public static String[][] teamGenerator() {
 		String[][] players = new String[16][6];
 		String[] randomNames = {"Erickson","Ryan","Briggs","Hunt","Rice","Leonard",
@@ -120,30 +229,34 @@ public static final String ANSI_YELLOW = "\u001B[33m";
 
 	        }
 	            
-			
+		
 		return(players);
 		
+		
 	}
-	public static void mainMenu(String[][] players, String formation){
+	public static void mainMenu(String[][] players, String formation, String teamName, String managerName, String savedFileName){
 		System.out.println("--Team--Formation--Scores--Play--Save--");
 		Scanner keyboardInput = new Scanner(System.in);
 		String input = keyboardInput.nextLine();
 		
 			if (input.equalsIgnoreCase("team")==true) {
-				teamViewer(players, formation);
+				teamViewer(players, formation, teamName, managerName, savedFileName);
 			}
 			else if (input.equalsIgnoreCase("formation")==true) {
 				formationView(players,formation);
 			}
+			else if (input.equalsIgnoreCase("save")==true) {
+				save(players,formation,teamName,managerName, savedFileName);
+			}
 			
 	}
-	public static void teamViewer(String[][] players, String formation) {
+	public static void teamViewer(String[][] players, String formation, String teamName, String managerName, String savedFileName) {
 		Scanner keyboardInput = new Scanner(System.in);
 		String input = keyboardInput.nextLine();
 		
 		System.out.println(String.format("%-20s %-20s %-20s %-20s %-20s %-20s %-20s %-20s%n","PLAYER NAME","v PHYSICALITY", "v AGILITY","v PLAYMAKING","v ATTACKING ","v DEFENDING","v OVERALL","v OPTIMAL POSITION"));
 		if (input.equalsIgnoreCase("return")) {
-			mainMenu(players, formation);
+			mainMenu(players, formation, teamName,managerName, savedFileName);
 		}
 		else {
 			for (int i = 0; i < 16; i++) {
